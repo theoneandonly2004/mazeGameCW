@@ -11,17 +11,23 @@ public class ColorToPrefab {
 
 public class LevelLoader : MonoBehaviour {
 
+    int patrolNumber = 0;
+    GameObject player;
     List<System.IO.FileInfo> fileInfo;
     public List<string> levelNames;
     Vector2 WorldSize;
+    List<GameObject> enemies;
+    List<GameObject> patrolPoints;
 
     public ColorToPrefab[] colorToPrefab;
 
 
 	// Use this for initialization
 	void Start () {
+        enemies = new List<GameObject>();
+        patrolPoints = new List<GameObject>();
         LoadAllLevelNames();
-        if (levelNames.Count > 0) LoadMap(levelNames[4]);
+        if (levelNames.Count > 0) LoadMap(levelNames[6]);
     }
 
 	void EmptyMap() {
@@ -75,27 +81,100 @@ public class LevelLoader : MonoBehaviour {
 
 			}
 		}
-
+        managePatrolPoints();
         GetComponent<Grid>().CreateGrid();
 	}
 
-	void SpawnTileAt( Color32 c, int x, int y ) {
+    void managePatrolPoints()
+    {
+        //decides which patrol points link to eachother 
+        patrolPoints[0].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[1], patrolPoints[0]);
+        patrolPoints[1].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[7], patrolPoints[1]);
+        patrolPoints[2].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[3], patrolPoints[2]);
+        patrolPoints[3].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[4], patrolPoints[3]);
+        patrolPoints[4].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[2], patrolPoints[4]);
+        patrolPoints[5].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[6], patrolPoints[5]);
+        patrolPoints[6].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[0], patrolPoints[6]);
+        patrolPoints[7].GetComponent<PatrolPoint>().point = new Patrol(patrolPoints[5], patrolPoints[7]);
 
+        //need to turn off all other patrol points except for the currently active one
+
+        
+    }
+
+    public List<GameObject> getEnemiesList()
+    {
+        return enemies;
+    }
+
+    public GameObject getPlayerObject()
+    {
+        return player;
+    }
+
+	void SpawnTileAt( Color32 c, int x, int y ) {
+        
 		// If this is a transparent pixel, then it's meant to just be empty.
 		if(c.a <= 0) {
 			return;
 		}
 
-   
 
-		// Find the right color in our map
 
-		// NOTE: This isn't optimized. You should have a dictionary lookup for max speed
+
+        // Find the right color in our map
+
+        // NOTE: This isn't optimized. You should have a dictionary lookup for max speed
+
+        Color32 playerColor = new Color32(194, 145, 195, 255);
+        Color32 enemyColor = new Color32(255, 0, 0, 255);
+        Color32 patrolPointColor = new Color32(33, 227, 0, 255);
+
 		foreach(ColorToPrefab ctp in colorToPrefab) {
-			
-			if( c.Equals(ctp.color) ) {
-				// Spawn the prefab at the right location
-				GameObject go = (GameObject)Instantiate(ctp.prefab, new Vector3(-WorldSize.x/2 + x,0, -WorldSize.y / 2 + y), Quaternion.identity );
+
+           
+
+
+            if ( c.Equals(ctp.color) ) {
+
+
+                // Spawn the prefab at the right location
+
+                GameObject go;
+
+                if (c.Equals(playerColor))
+                {
+                    Debug.Log("i found the player and spawned");
+                     go = (GameObject)Instantiate(ctp.prefab, new Vector3(-WorldSize.x / 2 + x, 0, -WorldSize.y / 2 + y), Quaternion.identity);
+                    player = go;
+                   
+
+                    //player.SetActive(false);
+                    return;
+                }
+                else if (c.Equals(enemyColor))
+                {
+                    
+                    //enemies.Add(go);
+                    return;
+                }
+                else if (c.Equals(patrolPointColor))
+                {
+                   
+                    y += 1;
+                    go = (GameObject)Instantiate(ctp.prefab, new Vector3(-WorldSize.x / 2 + x, 0, -WorldSize.y / 2 + y), Quaternion.identity);
+                   
+                    go.name = "number:" + patrolNumber;
+                    patrolNumber++;
+                    patrolPoints.Add(go);
+                }
+                else
+                {
+                    
+                    y = y+ 1;
+                     go = (GameObject)Instantiate(ctp.prefab, new Vector3(-WorldSize.x / 2 + x, 0, -WorldSize.y / 2 + y), Quaternion.identity);
+                }
+
                 /*if(go.GetComponent<BoxCollider>() != null)
                 {
                     float currentX = go.transform.position.x;
@@ -106,7 +185,9 @@ public class LevelLoader : MonoBehaviour {
                    
                    
                 }*/
-				go.transform.SetParent(this.transform);
+                go.transform.SetParent(this.transform);
+
+                if(go.GetComponent<Renderer>() != null)
                 go.GetComponent<Renderer>().material.color = c;
               
 				// maybe do more stuff to the gameobject here?

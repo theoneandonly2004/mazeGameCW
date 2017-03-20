@@ -9,6 +9,8 @@ public class Grid : MonoBehaviour
     public Vector2 gridWorldSize;
     public float nodeRadius;
     Node[,] grid;
+    List<GameObject> enemies;
+    GameObject player;
 
     float nodeDiameter;
     int gridSizeX, gridSizeY;
@@ -19,6 +21,22 @@ public class Grid : MonoBehaviour
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
         //CreateGrid();
+    }
+
+    void Start()
+    {
+        player = this.GetComponent<LevelLoader>().getPlayerObject();
+        enemies = this.GetComponent<LevelLoader>().getEnemiesList();
+
+       /* if (player != null)
+        {
+            player.SetActive(false);
+        }
+
+        for(int count = 0; count < enemies.Count; count++)
+        {
+            enemies[count].SetActive(false);
+        }*/
     }
 
    public void CreateGrid()
@@ -35,6 +53,16 @@ public class Grid : MonoBehaviour
                 grid[x, y] = new Node(walkable, worldPoint, x, y);
             }
         }
+
+        this.GetComponent<LevelLoader>().getPlayerObject().SetActive(true);
+
+        /*for (int count = 0; count < enemies.Count; count++)
+        {
+            enemies[count].SetActive(true);
+        }*/
+
+
+
     }
 
     public List<Node> GetNeighbours(Node node)
